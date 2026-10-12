@@ -1,1 +1,641 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>جدولي الدراسي</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="theme-color" content="#1C1A17">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="جدولي">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBF8F3;
+    --paper-dark:#12100E;
+    --ink:#1C1A17;
+    --ink-soft:#5B564C;
+    --line:#E4DDD0;
+    --line-dark:#332F28;
+    --section:#3E6259;
+    --section-bg:#E8EFEA;
+    --lecture:#9C4A2E;
+    --lecture-bg:#F3E4DA;
+    --gold:#B98B2A;
 
+    --bg: var(--paper);
+    --fg: var(--ink);
+    --fg-soft: var(--ink-soft);
+    --border: var(--line);
+    --card-bg:#FFFFFF;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-sizing:border-box;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#15130F;
+      --fg:#F1ECE2;
+      --fg-soft:#B7AF9E;
+      --border:#332F28;
+      --card-bg:#1D1A15;
+      --section-bg:#20302A;
+      --lecture-bg:#33241B;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#15130F;
+    --fg:#F1ECE2;
+    --fg-soft:#B7AF9E;
+    --border:#332F28;
+    --card-bg:#1D1A15;
+    --section-bg:#20302A;
+    --lecture-bg:#33241B;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-padding-top: env(safe-area-inset-top, 0px);}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--fg);
+    font-family:'IBM Plex Sans Arabic','Tajawal',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100%;
+  }
+
+  .wrap{
+    max-width:760px;
+    margin:0 auto;
+    padding:28px 18px 60px;
+  }
+
+  /* ---- Header ---- */
+  header{
+    padding-bottom:22px;
+    margin-bottom:22px;
+    border-bottom:1px solid var(--border);
+    position:relative;
+  }
+  .kicker{
+    font-family:'Tajawal',sans-serif;
+    font-weight:500;
+    font-size:13px;
+    color:var(--gold);
+    letter-spacing:.02em;
+    margin:0 0 6px;
+  }
+  h1{
+    font-family:'Tajawal',sans-serif;
+    font-weight:900;
+    font-size:clamp(28px,7vw,40px);
+    line-height:1.15;
+    margin:0 0 8px;
+    color:var(--fg);
+  }
+  .sub{
+    font-size:14.5px;
+    color:var(--fg-soft);
+    margin:0;
+    line-height:1.6;
+  }
+  .header-actions{
+    position:absolute;
+    left:0;
+    top:2px;
+    display:flex;
+    gap:8px;
+  }
+  .theme-toggle{
+    background:none;
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:6px 12px;
+    font-size:12.5px;
+    color:var(--fg-soft);
+    cursor:pointer;
+    font-family:inherit;
+    white-space:nowrap;
+    display:inline-flex;
+    align-items:center;
+  }
+  .theme-toggle:hover{ border-color: var(--gold); color:var(--fg); }
+  #installBtn{ color:var(--gold); border-color:var(--gold); }
+
+  /* ---- Day tabs ---- */
+  .days{
+    display:flex;
+    gap:6px;
+    overflow-x:auto;
+    padding-bottom:4px;
+    margin-bottom:26px;
+    -ms-overflow-style:none;
+    scrollbar-width:none;
+  }
+  .days::-webkit-scrollbar{display:none;}
+  .day-btn{
+    flex:0 0 auto;
+    font-family:'Tajawal',sans-serif;
+    font-weight:700;
+    font-size:15px;
+    padding:11px 18px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--card-bg);
+    color:var(--fg-soft);
+    cursor:pointer;
+    transition:background .18s ease, color .18s ease, border-color .18s ease;
+    white-space:nowrap;
+  }
+  .day-btn .dot{
+    display:inline-block;
+    width:6px;height:6px;
+    border-radius:50%;
+    background:var(--gold);
+    margin-inline-start:7px;
+    opacity:.55;
+  }
+  .day-btn.empty .dot{ display:none; }
+  .day-btn:hover{ border-color:var(--gold); color:var(--fg); }
+  .day-btn.active{
+    background:var(--ink);
+    border-color:var(--ink);
+    color:var(--paper);
+  }
+  :root[data-theme="dark"] .day-btn.active,
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .day-btn.active{ background:var(--gold); border-color:var(--gold); color:#15130F; } }
+
+  /* ---- Timeline ---- */
+  .day-title{
+    font-family:'Tajawal',sans-serif;
+    font-weight:900;
+    font-size:22px;
+    margin:0 0 4px;
+  }
+  .day-count{
+    font-size:13.5px;
+    color:var(--fg-soft);
+    margin:0 0 22px;
+  }
+
+  .timeline{
+    position:relative;
+    padding-inline-start:26px;
+    border-inline-start:2px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+
+  .empty-state{
+    padding:48px 20px;
+    text-align:center;
+    color:var(--fg-soft);
+    border:1px dashed var(--border);
+    border-radius:14px;
+    font-size:15px;
+    line-height:1.8;
+  }
+  .empty-state .big{
+    font-family:'Tajawal',sans-serif;
+    font-weight:700;
+    font-size:18px;
+    color:var(--fg);
+    display:block;
+    margin-bottom:6px;
+  }
+
+  .slot{
+    position:relative;
+    background:var(--card-bg);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:16px 18px;
+  }
+  .slot::before{
+    content:"";
+    position:absolute;
+    right:-31px;
+    top:20px;
+    width:11px;height:11px;
+    border-radius:50%;
+    background:var(--bg);
+    border:2px solid var(--gold);
+  }
+  [dir="rtl"] .slot::before{ right:auto; inset-inline-start:-31.5px; }
+
+  .slot-top{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:10px;
+    flex-wrap:wrap;
+  }
+  .time{
+    font-family:'Tajawal',sans-serif;
+    font-weight:700;
+    font-size:15px;
+    color:var(--fg);
+    direction:ltr;
+    unicode-bidi:isolate;
+  }
+  .period-label{
+    font-size:12px;
+    color:var(--fg-soft);
+  }
+
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-family:'Tajawal',sans-serif;
+    font-weight:700;
+    font-size:12px;
+    padding:4px 11px;
+    border-radius:100px;
+  }
+  .badge.section{ background:var(--section-bg); color:var(--section); }
+  .badge.lecture{ background:var(--lecture-bg); color:var(--lecture); }
+
+  .course{
+    font-family:'Tajawal',sans-serif;
+    font-weight:700;
+    font-size:18.5px;
+    margin:2px 0 10px;
+    color:var(--fg);
+    line-height:1.4;
+  }
+
+  .meta{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .meta-row{
+    display:flex;
+    align-items:flex-start;
+    gap:9px;
+    font-size:14px;
+    color:var(--fg-soft);
+    line-height:1.6;
+  }
+  .meta-row svg{ flex:0 0 auto; margin-top:3px; opacity:.7; }
+  .meta-row b{ color:var(--fg); font-weight:600; }
+
+  footer{
+    margin-top:40px;
+    padding-top:18px;
+    border-top:1px solid var(--border);
+    font-size:12.5px;
+    color:var(--fg-soft);
+    text-align:center;
+  }
+
+  /* ---- edit mode ---- */
+  .theme-toggle.on{ background:var(--gold); border-color:var(--gold); color:#15130F; }
+  .edit-banner{ display:none; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    background:var(--lecture-bg); color:var(--lecture); border-radius:12px; padding:10px 14px; margin-bottom:18px; font-size:13.5px; line-height:1.6; }
+  body.editing .edit-banner{ display:flex; }
+  .link-btn{ background:none; border:none; color:inherit; font-family:inherit; font-size:13px; text-decoration:underline; cursor:pointer; padding:0; }
+  .slot-actions{ display:none; gap:8px; margin-top:14px; padding-top:12px; border-top:1px dashed var(--border); }
+  body.editing .slot-actions{ display:flex; }
+  .mini-btn{ font-family:inherit; font-size:13px; padding:6px 14px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--fg); cursor:pointer; }
+  .mini-btn:hover{ border-color:var(--gold); }
+  .mini-btn.danger{ color:#B3402A; }
+  .mini-btn.danger.confirm{ background:#B3402A; color:#fff; border-color:#B3402A; }
+  .add-btn{ display:none; width:100%; margin-top:16px; padding:14px; border:1.5px dashed var(--gold); border-radius:14px; background:none;
+    color:var(--gold); font-family:'Tajawal',sans-serif; font-weight:700; font-size:15px; cursor:pointer; }
+  body.editing .add-btn{ display:block; }
+  .add-btn:hover{ background:var(--lecture-bg); }
+
+  .modal-back{ position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:flex-end; justify-content:center; z-index:50; padding:0; }
+  .modal-back.open{ display:flex; }
+  .modal{ background:var(--card-bg); color:var(--fg); width:100%; max-width:560px; max-height:92%; overflow-y:auto;
+    border-radius:20px 20px 0 0; padding:22px 20px calc(22px + env(safe-area-inset-bottom, 0px)); }
+  @media (min-width:600px){ .modal-back{ align-items:center; } .modal{ border-radius:20px; } }
+  .modal h3{ font-family:'Tajawal',sans-serif; font-weight:900; font-size:20px; margin:0 0 16px; }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:12.5px; color:var(--fg-soft); margin-bottom:5px; font-weight:600; }
+  .field input,.field select{ width:100%; font-family:inherit; font-size:15px; padding:10px 12px; border:1px solid var(--border);
+    border-radius:10px; background:var(--bg); color:var(--fg); }
+  .field input:focus,.field select:focus{ outline:2px solid var(--gold); outline-offset:0; }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .err{ color:#B3402A; font-size:13px; min-height:18px; margin-bottom:8px; }
+  .modal-actions{ display:flex; gap:10px; }
+  .btn{ flex:1; font-family:'Tajawal',sans-serif; font-weight:700; font-size:15px; padding:12px; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--fg); cursor:pointer; }
+  .btn.primary{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .btn.primary{ background:var(--gold); border-color:var(--gold); color:#15130F; } }
+  :root[data-theme="dark"] .btn.primary{ background:var(--gold); border-color:var(--gold); color:#15130F; }
+
+  @media (max-width:420px){
+    .wrap{ padding:22px 14px 50px; }
+    .header-actions{ position:static; margin-top:14px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="header-actions">
+      <button class="theme-toggle" id="installBtn" style="display:none;">📲 تثبيت التطبيق</button>
+      <button class="theme-toggle" id="editToggle">✏️ تعديل الجدول</button>
+      <button class="theme-toggle" id="themeToggle">وضع الليل</button>
+    </div>
+    <p class="kicker">الفرقة الثانية — عام</p>
+    <h1>جدولي الدراسي</h1>
+    <p class="sub">كلية الحاسبات والمعلومات — جامعة الزقازيق · اختر يوم لعرض المحاضرات والسكاشن</p>
+  </header>
+
+  <nav class="days" id="dayTabs"></nav>
+
+  <div class="edit-banner" id="editBanner">
+    <span>وضع التعديل شغّال — تقدر تعدّل أو تمسح أي حصة أو تضيف حصة جديدة. التغييرات بتتحفظ على جهازك.</span>
+    <button class="link-btn" id="resetBtn">↺ استرجاع الجدول الأصلي</button>
+  </div>
+
+  <main>
+    <h2 class="day-title" id="dayTitle"></h2>
+    <p class="day-count" id="dayCount"></p>
+    <div class="timeline" id="timeline"></div>
+    <button class="add-btn" id="addBtn">+ إضافة حصة في اليوم ده</button>
+  </main>
+
+  <footer>معمارية وتنظيم الحاسب · نظم التشغيل · نظم قواعد البيانات · هياكل البيانات · الرياضيات III · كتابة التقارير</footer>
+</div>
+
+
+<div class="modal-back" id="modalBack">
+  <div class="modal" role="dialog" aria-modal="true">
+    <h3 id="modalTitle">تعديل الحصة</h3>
+    <div class="field">
+      <label for="fType">النوع</label>
+      <select id="fType">
+        <option value="lecture">محاضرة</option>
+        <option value="section">سكشن</option>
+      </select>
+    </div>
+    <div class="field"><label for="fCourse">اسم المادة</label><input id="fCourse" placeholder="نظم التشغيل"></div>
+    <div class="field"><label for="fInstr">الدكتور / المعيد</label><input id="fInstr"></div>
+    <div class="field"><label for="fPlace">المكان</label><input id="fPlace" placeholder="معمل 8 / مدرج 1"></div>
+    <div class="field"><label for="fPeriod">الفترة</label><select id="fPeriod"></select></div>
+    <div class="err" id="fErr"></div>
+    <div class="modal-actions">
+      <button class="btn primary" id="fSave">حفظ</button>
+      <button class="btn" id="fCancel">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_DATA = {
+  "السبت": [],
+  "الأحد": [
+    { time:"8:30 – 10:00", period:"الفترة الأولى", type:"lecture", course:"كتابة التقارير ومهارات العرض", instructor:"د. سعاد نجيب", place:"مدرج 3" },
+    { time:"10:15 – 11:45", period:"الفترة الثانية", type:"section", course:"معمارية وتنظيم الحاسب", instructor:"م. أمل مجدي", place:"معمل 19" },
+    { time:"12:00 – 1:30", period:"الفترة الثالثة", type:"section", course:"الرياضيات III", instructor:"م. خلود محسن عبدالمجيد", place:"معمل M1" }
+  ],
+  "الاثنين": [
+    { time:"8:30 – 10:00", period:"الفترة الأولى", type:"lecture", course:"نظم التشغيل", instructor:"أ.د محمد علاء فهمي، د. شروق الأمير", place:"المدرج الرئيسي" },
+    { time:"10:15 – 11:45", period:"الفترة الثانية", type:"section", course:"نظم قواعد البيانات", instructor:"م. ميرنا مجدي محمد", place:"معمل M1" },
+    { time:"12:00 – 1:30", period:"الفترة الثالثة", type:"lecture", course:"الرياضيات III", instructor:"د. سماح عبدالرحمن", place:"المدرج الرئيسي" },
+    { time:"1:45 – 3:15", period:"الفترة الرابعة", type:"lecture", course:"هياكل البيانات", instructor:"أ.م.د أحمد رأفت عباس، د. محمود حسن النامولي", place:"قاعة الدور الثالث" }
+  ],
+  "الثلاثاء": [
+    { time:"8:30 – 10:00", period:"الفترة الأولى", type:"section", course:"هياكل البيانات", instructor:"م. أحمد حسام سلامة", place:"معمل 16" },
+    { time:"10:15 – 11:45", period:"الفترة الثانية", type:"lecture", course:"معمارية وتنظيم الحاسب", instructor:"د. دعاء الشورى", place:"مدرج 1" },
+    { time:"12:00 – 1:30", period:"الفترة الثالثة", type:"lecture", course:"نظم قواعد البيانات", instructor:"د. نبيل مصطفى، د. أحمد سامي محمد، م.م محمود إبراهيم", place:"المدرج الرئيسي" },
+    { time:"1:45 – 3:15", period:"الفترة الرابعة", type:"section", course:"نظم التشغيل", instructor:"م. شروق أسامة حسن", place:"معمل 8" }
+  ],
+  "الأربعاء": [],
+  "الخميس": [],
+  "الجمعة": []
+};
+
+const PERIODS = [
+  { label:"الفترة الأولى",  time:"8:30 – 10:00" },
+  { label:"الفترة الثانية", time:"10:15 – 11:45" },
+  { label:"الفترة الثالثة", time:"12:00 – 1:30" },
+  { label:"الفترة الرابعة", time:"1:45 – 3:15" },
+  { label:"الفترة الخامسة", time:"3:30 – 5:00" }
+];
+function periodIndex(s){ const i = PERIODS.findIndex(p => p.label === s.period); return i < 0 ? 99 : i; }
+
+const STORE_KEY = 'my-schedule-data-v1';
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function loadData(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw){
+      const d = JSON.parse(raw);
+      if(d && typeof d === 'object' && Object.keys(DEFAULT_DATA).every(k => Array.isArray(d[k]))) return d;
+    }
+  }catch(e){}
+  return clone(DEFAULT_DATA);
+}
+function saveData(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(DATA)); }catch(e){}
+}
+let DATA = loadData();
+let currentDay = "الأحد";
+let editing = false;
+
+const DAY_ORDER = ["السبت","الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة"];
+
+const pinIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`;
+const userIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>`;
+
+const tabsEl = document.getElementById('dayTabs');
+const timelineEl = document.getElementById('timeline');
+const dayTitleEl = document.getElementById('dayTitle');
+const dayCountEl = document.getElementById('dayCount');
+
+function buildTabs(activeDay){
+  tabsEl.innerHTML = '';
+  DAY_ORDER.forEach(day=>{
+    const hasClasses = DATA[day] && DATA[day].length > 0;
+    const btn = document.createElement('button');
+    btn.className = 'day-btn' + (day===activeDay ? ' active':'') + (hasClasses ? '' : ' empty');
+    btn.innerHTML = day + (hasClasses ? '<span class="dot"></span>' : '');
+    btn.addEventListener('click', ()=> renderDay(day));
+    tabsEl.appendChild(btn);
+  });
+}
+
+function esc(s){ return String(s).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch])); }
+
+function renderDay(day){
+  currentDay = day;
+  buildTabs(day);
+  const slots = (DATA[day] || []).map((s,i)=>({...s,_i:i})).sort((a,b)=>periodIndex(a)-periodIndex(b));
+  dayTitleEl.textContent = 'يوم ' + day;
+  dayCountEl.textContent = slots.length ? `${slots.length} محاضرات وسكاشن` : 'يوم إجازة — لا يوجد محاضرات';
+  timelineEl.innerHTML = '';
+
+  if(slots.length === 0){
+    timelineEl.style.borderInlineStart = 'none';
+    timelineEl.style.paddingInlineStart = '0';
+    timelineEl.innerHTML = `<div class="empty-state"><span class="big">🎓 يوم راحة</span>مفيش محاضرات ولا سكاشن مجدولة النهاردة.</div>`;
+    return;
+  }
+  timelineEl.style.borderInlineStart = '2px solid var(--border)';
+  timelineEl.style.paddingInlineStart = '26px';
+
+  slots.forEach(s=>{
+    const el = document.createElement('div');
+    el.className = 'slot';
+    const badgeLabel = s.type === 'section' ? 'سكشن' : 'محاضرة';
+    const badgeClass = s.type === 'section' ? 'section' : 'lecture';
+    el.innerHTML = `
+      <div class="slot-top">
+        <span class="time">${esc(s.time)}</span>
+        <span class="badge ${badgeClass}">${badgeLabel}</span>
+      </div>
+      <p class="period-label">${esc(s.period)}</p>
+      <h3 class="course">${esc(s.course)}</h3>
+      <div class="meta">
+        <div class="meta-row">${userIcon}<span><b>المعيد/الدكتور:</b> ${esc(s.instructor)}</span></div>
+        <div class="meta-row">${pinIcon}<span><b>المكان:</b> ${esc(s.place)}</span></div>
+      </div>
+      <div class="slot-actions">
+        <button class="mini-btn" data-act="edit">✏️ تعديل</button>
+        <button class="mini-btn danger" data-act="del">🗑️ مسح</button>
+      </div>
+    `;
+    const delBtn = el.querySelector('[data-act="del"]');
+    el.querySelector('[data-act="edit"]').addEventListener('click', ()=> openModal(day, s._i));
+    delBtn.addEventListener('click', ()=>{
+      if(!delBtn.classList.contains('confirm')){
+        delBtn.classList.add('confirm'); delBtn.textContent = 'تأكيد المسح؟';
+        setTimeout(()=>{ delBtn.classList.remove('confirm'); delBtn.textContent = '🗑️ مسح'; }, 3000);
+        return;
+      }
+      DATA[day].splice(s._i, 1);
+      saveData();
+      renderDay(day);
+    });
+    timelineEl.appendChild(el);
+  });
+}
+
+// ---- edit mode ----
+const editToggle = document.getElementById('editToggle');
+editToggle.addEventListener('click', ()=>{
+  editing = !editing;
+  document.body.classList.toggle('editing', editing);
+  editToggle.classList.toggle('on', editing);
+  editToggle.textContent = editing ? '✓ تم' : '✏️ تعديل الجدول';
+});
+
+const resetBtn = document.getElementById('resetBtn');
+resetBtn.addEventListener('click', ()=>{
+  if(resetBtn.dataset.confirm !== '1'){
+    resetBtn.dataset.confirm = '1'; resetBtn.textContent = 'اضغط تاني للتأكيد';
+    setTimeout(()=>{ resetBtn.dataset.confirm = ''; resetBtn.textContent = '↺ استرجاع الجدول الأصلي'; }, 3000);
+    return;
+  }
+  resetBtn.dataset.confirm = ''; resetBtn.textContent = '↺ استرجاع الجدول الأصلي';
+  DATA = clone(DEFAULT_DATA);
+  saveData();
+  renderDay(currentDay);
+});
+
+// ---- modal ----
+const modalBack = document.getElementById('modalBack');
+const fType = document.getElementById('fType'), fCourse = document.getElementById('fCourse'),
+      fInstr = document.getElementById('fInstr'), fPlace = document.getElementById('fPlace'),
+      fPeriod = document.getElementById('fPeriod'), fErr = document.getElementById('fErr');
+let modalCtx = null;
+
+PERIODS.forEach((p,i)=>{
+  const o = document.createElement('option');
+  o.value = i; o.textContent = `${p.label} (${p.time})`;
+  fPeriod.appendChild(o);
+});
+
+function openModal(day, idx){
+  const isNew = idx === null;
+  modalCtx = { day, idx };
+  const s = isNew ? { type:'lecture', course:'', instructor:'', place:'', period:PERIODS[0].label } : DATA[day][idx];
+  document.getElementById('modalTitle').textContent = isNew ? `إضافة حصة — ${day}` : `تعديل الحصة — ${day}`;
+  fType.value = s.type; fCourse.value = s.course; fInstr.value = s.instructor; fPlace.value = s.place;
+  fPeriod.value = Math.max(0, periodIndex(s) === 99 ? 0 : periodIndex(s));
+  fErr.textContent = '';
+  modalBack.classList.add('open');
+  fCourse.focus();
+}
+function closeModal(){ modalBack.classList.remove('open'); modalCtx = null; }
+
+document.getElementById('addBtn').addEventListener('click', ()=> openModal(currentDay, null));
+document.getElementById('fCancel').addEventListener('click', closeModal);
+modalBack.addEventListener('click', (e)=>{ if(e.target === modalBack) closeModal(); });
+document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeModal(); });
+
+document.getElementById('fSave').addEventListener('click', ()=>{
+  if(!fCourse.value.trim()){ fErr.textContent = 'اكتب اسم المادة.'; return; }
+  const per = PERIODS[+fPeriod.value];
+  const item = {
+    time: per.time, period: per.label, type: fType.value, course: fCourse.value.trim(),
+    instructor: fInstr.value.trim() || '—', place: fPlace.value.trim() || '—'
+  };
+  const { day, idx } = modalCtx;
+  if(idx === null) DATA[day].push(item); else DATA[day][idx] = item;
+  saveData();
+  closeModal();
+  renderDay(day);
+});
+
+// Default to the first day that has classes
+renderDay(currentDay);
+
+// Theme toggle
+const toggleBtn = document.getElementById('themeToggle');
+function applyStoredTheme(){
+  try{
+    const stored = localStorage.getItem('schedule-theme');
+    if(stored === 'dark' || stored === 'light'){
+      document.documentElement.setAttribute('data-theme', stored);
+      toggleBtn.textContent = stored === 'dark' ? 'وضع النهار' : 'وضع الليل';
+    }
+  }catch(e){}
+}
+toggleBtn.addEventListener('click', ()=>{
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  toggleBtn.textContent = next === 'dark' ? 'وضع النهار' : 'وضع الليل';
+  try{ localStorage.setItem('schedule-theme', next); }catch(e){}
+});
+applyStoredTheme();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+}
+let deferredPrompt = null;
+const installBtn = document.getElementById('installBtn');
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault(); deferredPrompt = e;
+  if (installBtn) installBtn.style.display = 'inline-flex';
+});
+if (installBtn) {
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt(); await deferredPrompt.userChoice;
+    deferredPrompt = null; installBtn.style.display = 'none';
+  });
+}
+window.addEventListener('appinstalled', () => { if (installBtn) installBtn.style.display = 'none'; });
+</script>
+</body>
+</html>

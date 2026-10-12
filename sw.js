@@ -1,4 +1,4 @@
-const CACHE = 'jadwaly-v1';
+const CACHE = 'jadwaly-v2';
 const ASSETS = [
   './',
   './index.html',
